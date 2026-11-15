@@ -1,5 +1,8 @@
 package com.pathfinder.api;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.io.Serializable;
 import java.time.Instant;
 
@@ -25,11 +28,12 @@ public final class TransitEdge implements Serializable {
    * @param fromDate
    * @param toDate
    */
-  public TransitEdge(final String edge,
-                     final String fromNode,
-                     final String toNode,
-                     final Instant fromDate,
-                     final Instant toDate) {
+  @JsonCreator   // read back from pathfinder's JSON over HTTP (subject system split)
+  public TransitEdge(@JsonProperty("edge") final String edge,
+                     @JsonProperty("fromNode") final String fromNode,
+                     @JsonProperty("toNode") final String toNode,
+                     @JsonProperty("fromDate") final Instant fromDate,
+                     @JsonProperty("toDate") final Instant toDate) {
     this.edge = edge;
     this.fromNode = fromNode;
     this.toNode = toNode;

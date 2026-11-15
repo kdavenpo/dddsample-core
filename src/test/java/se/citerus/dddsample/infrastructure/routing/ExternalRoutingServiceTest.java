@@ -1,8 +1,8 @@
 package se.citerus.dddsample.infrastructure.routing;
 
 import com.pathfinder.api.GraphTraversalService;
-import com.pathfinder.internal.GraphDAOStub;
-import com.pathfinder.internal.GraphTraversalServiceImpl;
+import com.pathfinder.api.TransitEdge;
+import com.pathfinder.api.TransitPath;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import se.citerus.dddsample.domain.model.cargo.*;
@@ -31,18 +31,19 @@ public class ExternalRoutingServiceTest {
   public void setUp() {
     LocationRepository locationRepository = new LocationRepositoryInMem();
     voyageRepository = mock(VoyageRepository.class);
-    GraphTraversalService graphTraversalService = new GraphTraversalServiceImpl(new GraphDAOStub() {
-      public List<String> listLocations() {
-        return List.of(TOKYO.unLocode().idString(), STOCKHOLM.unLocode().idString(), GOTHENBURG.unLocode().idString());
-      }
-
-      public void storeCarrierMovementId(String cmId, String from, String to) {
-      }
-    });
+    // Pathfinder now runs as its own application, so a fixed path stands in for it:
+    // origin -> Tokyo -> Stockholm -> destination, arriving before any deadline.
+    GraphTraversalService graphTraversalService = (origin, destination, limitations) -> {
+      Instant now = Instant.EPOCH;
+      String tokyo = TOKYO.unLocode().idString(), stockholm = STOCKHOLM.unLocode().idString();
+      return List.of(new TransitPath(List.of(
+              new TransitEdge("0100S", origin, tokyo, now, now),
+              new TransitEdge("0100S", tokyo, stockholm, now, now),
+              new TransitEdge("0100S", stockholm, destination, now, now))));
+    };
     externalRoutingService = new ExternalRoutingService(graphTraversalService, locationRepository, voyageRepository);
   }
 
-  // TODO this test belongs in com.pathfinder
   @Test
   public void testCalculatePossibleRoutes() {
     TrackingId trackingId = new TrackingId("ABC");
@@ -53,6 +54,7 @@ public class ExternalRoutingServiceTest {
 
     List<Itinerary> candidates = externalRoutingService.fetchRoutesForSpecification(routeSpecification);
     assertThat(candidates).isNotNull();
+    assertThat(candidates).hasSize(1);
 
     for (Itinerary itinerary : candidates) {
       List<Leg> legs = itinerary.legs();

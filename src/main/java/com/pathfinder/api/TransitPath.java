@@ -1,5 +1,8 @@
 package com.pathfinder.api;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.List;
@@ -16,7 +19,8 @@ public final class TransitPath implements Serializable {
    *
    * @param transitEdges The legs for this itinerary.
    */
-  public TransitPath(final List<TransitEdge> transitEdges) {
+  @JsonCreator   // read back from pathfinder's JSON over HTTP (subject system split)
+  public TransitPath(@JsonProperty("transitEdges") final List<TransitEdge> transitEdges) {
     this.transitEdges = transitEdges;
   }
 

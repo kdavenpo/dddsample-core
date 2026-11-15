@@ -12,6 +12,10 @@ parseFailureDirectory: /tmp/failed
 
 brokerUrl: "vm://localhost?broker.persistent=false&broker.useJmx=false"
 
+# Pathfinder, the routing service, runs as its own application (pathfinder/)
+pathfinder:
+    url: http://localhost:8081
+
 spring:
     dataSource:
         url: jdbc:hsqldb:mem:dddsample
