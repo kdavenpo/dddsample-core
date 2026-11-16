@@ -1,0 +1,10 @@
+# CS 8674 data-collection runs. Use with:  --spring.profiles.active=subject
+server:
+  tomcat:
+    basedir: .
+    accesslog:                # one line per request: the endpoint template it matched, and its request ID
+      enabled: true           # (rid) next to the header it arrived with (in; '-' from outside), DECISIONS 37
+      directory: logs
+      prefix: access-pathfinder
+      buffered: false
+      pattern: '%t "%r" %s %D tmpl=%{org.springframework.web.servlet.HandlerMapping.bestMatchingPattern}r rid=%{requestId}r in=%{X-Request-Id}i'

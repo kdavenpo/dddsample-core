@@ -30,7 +30,7 @@ import se.citerus.dddsample.interfaces.InterfacesApplicationContext;
 
 
 @Configuration
-@Import({InterfacesApplicationContext.class, InfrastructureMessagingJmsConfig.class})
+@Import({InterfacesApplicationContext.class, InfrastructureMessagingJmsConfig.class, RequestIds.class})
 public class DDDSampleApplicationContext {
 
     @Autowired
@@ -74,10 +74,11 @@ public class DDDSampleApplicationContext {
     }
 
     // Pathfinder runs as its own application and is called over HTTP (subject system split).
-    // RestClient.create, not an injected RestClient.Builder, which the JPA test slices do not provide.
+    // RestClient.builder(), not an injected RestClient.Builder, which the JPA test slices do not provide.
+    // Each call passes on the request's ID (RequestIds).
     @Bean
     public GraphTraversalService graphTraversalService(@Value("${pathfinder.url}") String pathfinderUrl) {
-        return new PathfinderClient(RestClient.create(pathfinderUrl));
+        return new PathfinderClient(RestClient.builder().baseUrl(pathfinderUrl).requestInterceptor(RequestIds.passOn()).build());
     }
 
     @Bean
