@@ -95,7 +95,9 @@ public class InfrastructureMessagingJmsConfig {
     @Bean
     public ConnectionFactory jmsConnectionFactory() {
         ActiveMQConnectionFactory factory = new ActiveMQConnectionFactory(brokerUrl);
-        factory.setTrustedPackages(List.of("se.citerus.dddsample.interfaces.handling", "se.citerus.dddsample.domain", "java.util"));
+        // java.time added (CS 8674, DECISIONS 65): with the broker in its own container, a queued message is
+        // deserialized, and its dates are java.time types; the in-process broker never deserialized it.
+        factory.setTrustedPackages(List.of("se.citerus.dddsample.interfaces.handling", "se.citerus.dddsample.domain", "java.util", "java.time"));
         return factory;
     }
 
