@@ -1,13 +1,13 @@
 # Builds the three jars and the three images the deployment uses (CS 8674, DECISIONS 65).
 # Run from the repository root, on branch c3-deployment:   .\deploy\build.ps1
-# The starting system's jars are built from branch subject-system, in a worktree next to this one,
-# so the baseline runs exactly the starting system's code.
+# The starting system's jars are built from branch c0-deployment (subject-system plus one line that
+# lets its queue consumer read dates from an external broker), in a worktree next to this one.
 $ErrorActionPreference = "Stop"
 $root = (Get-Location).Path
 $c0 = Join-Path (Split-Path $root -Parent) "dddsample-c0"
 
 if (-not (Test-Path $c0)) {
-    git worktree add $c0 subject-system
+    git worktree add -b c0-deployment $c0 subject-system
 }
 New-Item -ItemType Directory -Force deploy\jars | Out-Null
 
