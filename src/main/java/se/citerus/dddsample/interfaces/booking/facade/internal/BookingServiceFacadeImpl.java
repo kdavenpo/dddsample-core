@@ -34,12 +34,21 @@ public class BookingServiceFacadeImpl implements BookingServiceFacade {
   private LocationRepository locationRepository;
   private CargoRepository cargoRepository;
   private VoyageRepository voyageRepository;
+  // Injected rather than created with new, so that a deployed decomposition can place it in
+  // another service (CS 8674, DECISIONS 65, choice C). Behaviour is unchanged.
+  private ItineraryCandidateDTOAssembler itineraryCandidateDTOAssembler;
 
   public BookingServiceFacadeImpl(BookingService bookingService, LocationRepository locationRepository, CargoRepository cargoRepository, VoyageRepository voyageRepository) {
+    this(bookingService, locationRepository, cargoRepository, voyageRepository, new ItineraryCandidateDTOAssembler());
+  }
+
+  public BookingServiceFacadeImpl(BookingService bookingService, LocationRepository locationRepository, CargoRepository cargoRepository, VoyageRepository voyageRepository,
+                                  ItineraryCandidateDTOAssembler itineraryCandidateDTOAssembler) {
     this.bookingService = bookingService;
     this.locationRepository = locationRepository;
     this.cargoRepository = cargoRepository;
     this.voyageRepository = voyageRepository;
+    this.itineraryCandidateDTOAssembler = itineraryCandidateDTOAssembler;
   }
 
   @Override
@@ -68,7 +77,7 @@ public class BookingServiceFacadeImpl implements BookingServiceFacade {
 
   @Override
   public void assignCargoToRoute(String trackingIdStr, RouteCandidateDTO routeCandidateDTO) {
-    final Itinerary itinerary = new ItineraryCandidateDTOAssembler().fromDTO(routeCandidateDTO, voyageRepository, locationRepository);
+    final Itinerary itinerary = itineraryCandidateDTOAssembler.fromDTO(routeCandidateDTO, voyageRepository, locationRepository);
     final TrackingId trackingId = new TrackingId(trackingIdStr);
 
     bookingService.assignCargoToRoute(itinerary, trackingId);
@@ -95,7 +104,7 @@ public class BookingServiceFacadeImpl implements BookingServiceFacade {
     final List<Itinerary> itineraries = bookingService.requestPossibleRoutesForCargo(new TrackingId(trackingId));
 
     final List<RouteCandidateDTO> routeCandidates = new ArrayList<RouteCandidateDTO>(itineraries.size());
-    final ItineraryCandidateDTOAssembler dtoAssembler = new ItineraryCandidateDTOAssembler();
+    final ItineraryCandidateDTOAssembler dtoAssembler = itineraryCandidateDTOAssembler;
     for (Itinerary itinerary : itineraries) {
       routeCandidates.add(dtoAssembler.toDTO(itinerary));
     }

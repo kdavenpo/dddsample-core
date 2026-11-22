@@ -15,6 +15,8 @@ import se.citerus.dddsample.application.ApplicationEvents;
 import se.citerus.dddsample.application.CargoInspectionService;
 import se.citerus.dddsample.application.HandlingEventService;
 
+import se.citerus.dddsample.split.ConditionalOnOwner;
+
 import java.util.List;
 
 @EnableJms
@@ -25,6 +27,7 @@ public class InfrastructureMessagingJmsConfig {
     private String brokerUrl;
 
     @Bean(value = "cargoHandledConsumer", destroyMethod = "close")
+    @ConditionalOnOwner("se.citerus.dddsample.infrastructure.messaging.jms.CargoHandledConsumer")   // the listener runs in its owner's service only
     public MessageConsumer cargoHandledConsumer(Session session, @Qualifier("cargoHandledQueue") Destination destination, CargoInspectionService cargoInspectionService) throws JMSException {
         MessageConsumer consumer = session.createConsumer(destination);
         consumer.setMessageListener(new CargoHandledConsumer(cargoInspectionService));
@@ -32,6 +35,7 @@ public class InfrastructureMessagingJmsConfig {
     }
 
     @Bean(value = "handlingEventRegistrationAttemptConsumer", destroyMethod = "close")
+    @ConditionalOnOwner("se.citerus.dddsample.infrastructure.messaging.jms.HandlingEventRegistrationAttemptConsumer")   // the listener runs in its owner's service only
     public MessageConsumer handlingEventRegistrationAttemptConsumer(Session session, @Qualifier("handlingEventRegistrationAttemptQueue") Destination destination, HandlingEventService handlingEventService) throws JMSException {
         MessageConsumer consumer = session.createConsumer(destination);
         consumer.setMessageListener(new HandlingEventRegistrationAttemptConsumer(handlingEventService));
@@ -39,6 +43,7 @@ public class InfrastructureMessagingJmsConfig {
     }
 
     @Bean(value = "misdirectedCargoConsumer", destroyMethod = "close")
+    @ConditionalOnOwner("se.citerus.dddsample.infrastructure.messaging.jms.SimpleLoggingConsumer")   // the listener runs in its owner's service only
     public MessageConsumer misdirectedCargoConsumer(Session session, @Qualifier("misdirectedCargoQueue") Destination destination) throws JMSException {
         MessageConsumer consumer = session.createConsumer(destination);
         consumer.setMessageListener(new SimpleLoggingConsumer());
@@ -46,6 +51,7 @@ public class InfrastructureMessagingJmsConfig {
     }
 
     @Bean(value = "deliveredCargoConsumer", destroyMethod = "close")
+    @ConditionalOnOwner("se.citerus.dddsample.infrastructure.messaging.jms.SimpleLoggingConsumer")   // the listener runs in its owner's service only
     public MessageConsumer deliveredCargoConsumer(Session session, @Qualifier("deliveredCargoQueue") Destination destination) throws JMSException {
         MessageConsumer consumer = session.createConsumer(destination);
         consumer.setMessageListener(new SimpleLoggingConsumer());
@@ -53,6 +59,7 @@ public class InfrastructureMessagingJmsConfig {
     }
 
     @Bean(value = "rejectedRegistrationAttemptsConsumer", destroyMethod = "close")
+    @ConditionalOnOwner("se.citerus.dddsample.infrastructure.messaging.jms.SimpleLoggingConsumer")   // the listener runs in its owner's service only
     public MessageConsumer rejectedRegistrationAttemptsConsumer(Session session, @Qualifier("rejectedRegistrationAttemptsQueue") Destination destination) throws JMSException {
         MessageConsumer consumer = session.createConsumer(destination);
         consumer.setMessageListener(new SimpleLoggingConsumer());

@@ -23,6 +23,8 @@ import se.citerus.dddsample.domain.model.location.LocationRepository;
 import se.citerus.dddsample.domain.model.voyage.VoyageRepository;
 import se.citerus.dddsample.interfaces.booking.facade.BookingServiceFacade;
 import se.citerus.dddsample.interfaces.booking.facade.internal.BookingServiceFacadeImpl;
+import se.citerus.dddsample.interfaces.booking.facade.internal.assembler.ItineraryCandidateDTOAssembler;
+import se.citerus.dddsample.split.ConditionalOnOwner;
 import se.citerus.dddsample.interfaces.handling.file.UploadDirectoryScanner;
 import se.citerus.dddsample.interfaces.tracking.TrackCommandValidator;
 import se.citerus.dddsample.interfaces.tracking.ws.CargoTrackingRestService;
@@ -69,11 +71,18 @@ public class InterfacesApplicationContext implements WebMvcConfigurer {
     }
 
     @Bean
-    public BookingServiceFacade bookingServiceFacade(BookingService bookingService, LocationRepository locationRepository, CargoRepository cargoRepository, VoyageRepository voyageRepository) {
-        return new BookingServiceFacadeImpl(bookingService, locationRepository, cargoRepository, voyageRepository);
+    public BookingServiceFacade bookingServiceFacade(BookingService bookingService, LocationRepository locationRepository, CargoRepository cargoRepository, VoyageRepository voyageRepository,
+                                                     ItineraryCandidateDTOAssembler itineraryCandidateDTOAssembler) {
+        return new BookingServiceFacadeImpl(bookingService, locationRepository, cargoRepository, voyageRepository, itineraryCandidateDTOAssembler);
     }
 
     @Bean
+    public ItineraryCandidateDTOAssembler itineraryCandidateDTOAssembler() {
+        return new ItineraryCandidateDTOAssembler();
+    }
+
+    @Bean
+    @ConditionalOnOwner("se.citerus.dddsample.interfaces.handling.file.UploadDirectoryScanner")
     public UploadDirectoryScanner uploadDirectoryScanner(ApplicationEvents applicationEvents) {
         File uploadDirectoryFile = new File(uploadDirectory);
         File parseFailureDirectoryFile = new File(parseFailureDirectory);

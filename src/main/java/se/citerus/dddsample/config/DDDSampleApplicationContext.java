@@ -3,9 +3,11 @@ package se.citerus.dddsample.config;
 import com.pathfinder.api.GraphTraversalService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.core.env.Environment;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.web.client.RestClient;
 import se.citerus.dddsample.application.ApplicationEvents;
@@ -27,6 +29,8 @@ import se.citerus.dddsample.infrastructure.routing.ExternalRoutingService;
 import se.citerus.dddsample.infrastructure.routing.PathfinderClient;
 import se.citerus.dddsample.infrastructure.sampledata.SampleDataGenerator;
 import se.citerus.dddsample.interfaces.InterfacesApplicationContext;
+import se.citerus.dddsample.split.LocalPathfinder;
+import se.citerus.dddsample.split.Split;
 
 
 @Configuration
@@ -76,8 +80,14 @@ public class DDDSampleApplicationContext {
     // Pathfinder runs as its own application and is called over HTTP (subject system split).
     // RestClient.builder(), not an injected RestClient.Builder, which the JPA test slices do not provide.
     // Each call passes on the request's ID (RequestIds).
+    // In a deployed decomposition that puts pathfinder's code in this service, the route finder runs
+    // in-process (CS 8674, DECISIONS 65).
     @Bean
-    public GraphTraversalService graphTraversalService(@Value("${pathfinder.url}") String pathfinderUrl) {
+    public GraphTraversalService graphTraversalService(@Value("${pathfinder.url}") String pathfinderUrl, Environment environment) {
+        Split split = new Split(environment);
+        if (split.active() && split.local("com.pathfinder.internal.GraphTraversalServiceImpl")) {
+            return LocalPathfinder.create();
+        }
         return new PathfinderClient(RestClient.builder().baseUrl(pathfinderUrl).requestInterceptor(RequestIds.passOn()).build());
     }
 
@@ -86,7 +96,9 @@ public class DDDSampleApplicationContext {
         return new ExternalRoutingService(graphTraversalService, locationRepository, voyageRepository);
     }
 
+    // Off in the services of a deployed decomposition: the seed step loads the data once (DECISIONS 65).
     @Bean
+    @ConditionalOnProperty(name = "dddsample.sample-data", havingValue = "true", matchIfMissing = true)
     public SampleDataGenerator sampleDataGenerator(CargoRepository cargoRepository,
                                                    VoyageRepository voyageRepository,
                                                    LocationRepository locationRepository,

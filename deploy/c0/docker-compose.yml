@@ -1,0 +1,48 @@
+# The starting system (C0) in the deployment setup: the baseline for C3 (DECISIONS 65, choice 4).
+# cargo-core and pathfinder are the starting system's own jars (branch subject-system, 4c65403);
+# only the database, the broker and the router differ from the data-collection run of 2026-11-16.
+# Run from this folder:  $env:RUN="c0-run1"; docker compose up -d
+name: cargo-c0
+
+x-limits: &limits
+  cpus: 1.0
+  mem_limit: 768m
+
+x-env: &env
+  SPRING_DATASOURCE_URL: jdbc:hsqldb:hsql://db:9001/dddsample
+  BROKERURL: tcp://activemq:61616
+  PATHFINDER_URL: http://pathfinder:8081
+
+services:
+  db:
+    <<: *limits
+    image: dddsample-c3:local          # only for its HSQLDB jar
+    command: ["java", "-cp", "/app/hsqldb.jar", "org.hsqldb.server.Server",
+              "--database.0", "mem:dddsample", "--dbname.0", "dddsample", "--address", "0.0.0.0", "--port", "9001"]
+
+  activemq:
+    <<: *limits
+    image: apache/activemq-classic:6.1.2
+
+  pathfinder:
+    <<: *limits
+    image: dddsample-c0-pathfinder:local
+    command: ["java", "-jar", "/app/app.jar", "--spring.profiles.active=subject"]
+    volumes: ["../runs/${RUN:-c0-test}:/app/logs"]
+
+  cargo-core:
+    <<: *limits
+    image: dddsample-c0-cargo:local
+    restart: on-failure                # until the database and broker accept connections
+    depends_on: [db, activemq, pathfinder]
+    environment: *env
+    command: ["java", "-jar", "/app/app.jar", "--spring.profiles.active=subject",
+              "--spring.jpa.hibernate.ddl-auto=create"]
+    volumes: ["../runs/${RUN:-c0-test}:/app/logs"]
+
+  router:
+    <<: *limits
+    image: nginx:1.27.3-alpine
+    depends_on: [cargo-core]
+    ports: ["8080:80"]
+    volumes: ["./nginx.conf:/etc/nginx/nginx.conf:ro"]

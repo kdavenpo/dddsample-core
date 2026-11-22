@@ -6,3 +6,6 @@ target
 *~
 /.gradle/
 .DS_Store
+# CS 8674 deployment (DECISIONS 65): built jars and run logs
+deploy/jars/
+deploy/runs/
