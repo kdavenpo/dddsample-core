@@ -11,6 +11,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.ClassUtils;
 import org.springframework.util.ReflectionUtils;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -42,6 +43,12 @@ public class InternalController {
     public InternalController(ApplicationContext context, Split split) {
         this.context = context;
         this.split = split;
+    }
+
+    /** Does no work: for measuring the cost of one call between containers (DECISIONS 65, choice 5). */
+    @GetMapping(value = "/internal/ping", produces = MediaType.APPLICATION_JSON_VALUE)
+    public String ping() {
+        return "{}";
     }
 
     @PostMapping(value = "/internal/{cls}/{method}", produces = MediaType.APPLICATION_JSON_VALUE)
